@@ -3,10 +3,12 @@
 
     <string name="app_name">SQLiteViewerSample</string>
     <string name="image">Content Provider Image</string>
+    <string name="image_with_args">Content Provider Image (with args")</string>
     <string name="audio">Content Provider Audio</string>
     <string name="video">Content Provider Video</string>
     <string name="my_uri">My Uri</string>
     <string name="my_file">My File</string>
+    <string name="my_file_with_args">My File (with args)</string>
 
     <string name="error_file_not_found">Can\'t find %1$s.</string>
     <string name="error_sqliteviewer_not_installed">SQLite Viewer is not installed.\n Do you want to download the application?</string>

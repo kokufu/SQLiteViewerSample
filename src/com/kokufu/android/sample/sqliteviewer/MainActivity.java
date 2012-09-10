@@ -27,6 +27,14 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     private static final String DB_NAME = "dummy.db";
 
+    private static final String CATEGORY = "com.kokufu.intent.category.APP_DB_VIEWER";
+    private static final String EXTRA_DB_TABLE = "com.kokufu.intent.extra.DB_TABLE";
+    private static final String EXTRA_DB_COLUMNS = "com.kokufu.intent.extra.DB_COLUMNS";
+    private static final String EXTRA_DB_SELECTION = "com.kokufu.intent.extra.DB_SELECTION";
+    private static final String EXTRA_DB_SELECTION_ARGS = "com.kokufu.intent.extra.DB_SELECTION_ARGS";
+    private static final String EXTRA_DB_SORT_ORDER = "com.kokufu.intent.extra.DB_SORT_ORDER";
+
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,54 +45,81 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 startSqliteViewer(
-                        Uri.parse("content://com.kokufu.android.provider.sqliteviewer"));
+                        Uri.parse("content://com.kokufu.android.provider.sqliteviewer"),
+                        null);
             }
         });
 
         findViewById(R.id.button_my_file).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Copy the database file to accessible space
-                File srcFile = new File(Environment.getDataDirectory(), "data/" + getPackageName() + "/databases/" + DB_NAME);
-                File destFile = new File(getFilesDir() + "/" + DB_NAME);
-
-                FileOutputStream outputStream = null;
-                try {
-                    outputStream = openFileOutput(DB_NAME, Context.MODE_WORLD_READABLE);
-                } catch (FileNotFoundException e) {
-                    String message = getString(R.string.error_file_not_found, destFile.getPath());
-                    Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
-                    return;
-                }
-
-                if (copyFromFileToStream(srcFile, outputStream)) {
+                File destFile = copyDatabase();
+                if (destFile != null) {
                     // Send the database path to SQLiteViewer
-                    startSqliteViewer(Uri.fromFile(destFile));
-                } else {
-                    String message = getString(R.string.error_file_not_found, srcFile.getPath());
-                    Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+                    startSqliteViewer(Uri.fromFile(destFile), null);
                 }
+            }
+        });
+
+        findViewById(R.id.button_my_file_with_args).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                File destFile = copyDatabase();
+                if (destFile != null) {
+                    // These args can be used on SQLiteViewer Free ver. 0.4.2. and above.
+                    Bundle extras = new Bundle();
+                    extras.putString(EXTRA_DB_TABLE, "dummy_table");
+                    extras.putStringArray(EXTRA_DB_COLUMNS, new String[] {"_id", "data"});
+                    extras.putString(EXTRA_DB_SELECTION, "_id <= ?");
+                    extras.putStringArray(EXTRA_DB_SELECTION_ARGS, new String[] {"2"});
+                    extras.putString(EXTRA_DB_SORT_ORDER, "_id DESC");
+
+                    // Send the database path to SQLiteViewer
+                    startSqliteViewer(Uri.fromFile(destFile), extras);
+                }
+
             }
         });
 
         findViewById(R.id.button_image).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                startSqliteViewer(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startSqliteViewer(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null);
+            }
+        });
+
+        findViewById(R.id.button_image_with_args).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // These args can be used on SQLiteViewer Free ver. 0.4.2. and above.
+                Bundle extras = new Bundle();
+                extras.putStringArray(EXTRA_DB_COLUMNS, new String[] {
+                        MediaStore.Images.ImageColumns._ID,
+                        MediaStore.Images.ImageColumns.DATA,
+                        MediaStore.Images.ImageColumns.DISPLAY_NAME,
+                        MediaStore.Images.ImageColumns.MIME_TYPE,
+                        MediaStore.Images.ImageColumns.DATE_TAKEN});
+                extras.putString(EXTRA_DB_SELECTION,
+                        MediaStore.Images.ImageColumns.MIME_TYPE + " = ?");
+                extras.putStringArray(EXTRA_DB_SELECTION_ARGS, new String[] {"image/jpeg"});
+                extras.putString(EXTRA_DB_SORT_ORDER,
+                        MediaStore.Images.ImageColumns.DATE_TAKEN + " DESC");
+
+                startSqliteViewer(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, extras);
             }
         });
 
         findViewById(R.id.button_audio).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                startSqliteViewer(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
+                startSqliteViewer(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null);
             }
         });
 
         findViewById(R.id.button_video).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                startSqliteViewer(MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+                startSqliteViewer(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, null);
             }
         });
     }
@@ -94,13 +129,17 @@ public class MainActivity extends Activity {
      *
      * @param uri data on intent
      */
-    private void startSqliteViewer(Uri uri) {
+    private void startSqliteViewer(Uri uri, Bundle extras) {
         Intent intent = new Intent(
                 Intent.ACTION_VIEW,
                 uri);
 
         // This category must be added
-        intent.addCategory("com.kokufu.intent.category.APP_DB_VIEWER");
+        intent.addCategory(CATEGORY);
+
+        if (extras != null) {
+            intent.putExtras(extras);
+        }
 
         try {
             startActivity(intent);
@@ -120,6 +159,34 @@ public class MainActivity extends Activity {
             ab.show();
         }
     }
+
+    /**
+     * Copy the database file to accessible space.
+     *
+     * @return the accessible file
+     */
+    private File copyDatabase() {
+        File srcFile = new File(Environment.getDataDirectory(), "data/" + getPackageName() + "/databases/" + DB_NAME);
+        File destFile = new File(getFilesDir() + "/" + DB_NAME);
+
+        FileOutputStream outputStream = null;
+        try {
+            outputStream = openFileOutput(DB_NAME, Context.MODE_WORLD_READABLE);
+        } catch (FileNotFoundException e) {
+            String message = getString(R.string.error_file_not_found, destFile.getPath());
+            Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+            return null;
+        }
+
+        if (copyFromFileToStream(srcFile, outputStream)) {
+            return destFile;
+        } else {
+            String message = getString(R.string.error_file_not_found, srcFile.getPath());
+            Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+            return null;
+        }
+    }
+
 
     private static boolean copyFromFileToStream(File srcFile, OutputStream openedOutputStream) {
         try {

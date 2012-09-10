@@ -17,10 +17,22 @@
         android:text="@string/my_file" />
 
     <Button
+        android:id="@+id/button_my_file_with_args"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/my_file_with_args" />
+
+    <Button
         android:id="@+id/button_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/image" />
+
+    <Button
+        android:id="@+id/button_image_with_args"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/image_with_args" />
 
     <Button
         android:id="@+id/button_audio"
