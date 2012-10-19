@@ -15,6 +15,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -40,6 +41,14 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+        // to create a database at the time of first start up.
+        Cursor cursor = getContentResolver().query(Uri.parse("content://com.kokufu.android.provider.sqliteviewer"),
+                null,
+                null,
+                null,
+                null);
+        cursor.close();
 
         findViewById(R.id.button_my_uri).setOnClickListener(new OnClickListener() {
             @Override
